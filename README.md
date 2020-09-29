@@ -1,0 +1,2 @@
+# Imposter Task Generator
+A simple command line Node app that generates a realistic crew member task list for imposters in the video game Among Us. The list allows for the imposter to have a task pattern to follow and refer to which is much more effective than the list of all possible tasks displayed in-game.
