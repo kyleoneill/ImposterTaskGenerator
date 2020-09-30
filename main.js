@@ -81,7 +81,7 @@ function createWindow(tasks) {
             nodeIntegration: true
         }
     });
-    //win.setMenu(null);
+    win.setMenu(null);
     electron.ipcMain.on('request-update', (event, arg) => {
         generateFakeTasks(arg).then((tasks) => {
             win.webContents.send('action-update', tasks);
