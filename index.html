@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <!-- https://electronjs.org/docs/tutorial/security#csp-meta-tag -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+  </head>
+  <body>
+    <h1>Imposter Tasks</h1>
+    <button onclick="handleClick(event)">New Tasks</button>
+    <table id="task-table">
+        <thead>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Steps</th>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+  </body>
+  <script>
+    function buildTable(data) {
+        var tbody = document.createElement('tbody');
+        for(var i in data) {
+            var row = tbody.insertRow(i);
+            var nameCell = row.insertCell(0);
+            nameCell.innerHTML = data[i].name;
+            var typeCell = row.insertCell(1);
+            typeCell.innerHTML = data[i].type;
+            var stepCell = row.insertCell(2);
+            stepCell.innerHTML = data[i].steps;
+            //document.writeln(`${nextInt}: ${data[i].name} - ${data[i].type} - ${data[i].steps}`);
+        }
+        //let table = document.getElementById("task-table");
+        let oldBody = document.querySelector('#task-table > tbody');
+        oldBody.parentNode.replaceChild(tbody, oldBody);
+    }
+    const querystring = require('querystring');
+    let query = querystring.parse(global.location.search);
+    let data = JSON.parse(query['?data']);
+    buildTable(data);
+
+    const {ipcRenderer} = require('electron');
+    ipcRenderer.on('action-update', (event, arg) => {
+        buildTable(arg);
+    });
+    function handleClick(e) {
+        ipcRenderer.send('request-update');
+    }
+  </script>
+</html>

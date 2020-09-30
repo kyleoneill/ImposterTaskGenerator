@@ -1,6 +1,12 @@
-const {Task, initDatabase} = require("./db");
+const {Task, initDatabase} = require("./src/db");
 this.database = {Task};
-const config = require('./config.json');
+const config = require('./src/config.json');
+const electron = require('electron');
+const { app } = require("electron");
+
+//TODO - add extra tasks equivilant to the number of common tasks provided (ex, one common task in list - provide one extra task)
+//       to compensate in case that common task is not used by the group
+// Should common tasks be in this list at all?
 
 async function generateFakeTasks() {
     let tasks = await Task.findAll({
@@ -50,15 +56,33 @@ async function generateFakeTasks() {
     return imposterTasks;
 }
 
+function createWindow(tasks) {
+    const win = new electron.BrowserWindow({
+        width: 1024,
+        height: 768,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
+    //win.setMenu(null);
+    electron.ipcMain.on('request-update', (event, arg) => {
+        generateFakeTasks().then((tasks) => {
+            win.webContents.send('action-update', tasks);
+        });
+    });
+    win.loadFile('index.html', {query: {"data": JSON.stringify(tasks)}});
+}
+
 async function main() {
     await initDatabase();
     let tasks = await generateFakeTasks();
-    console.log(`Map: ${config.map}\nTotal Tasks: ${tasks.length}`);
-    for(var i in tasks) {
-        let task = tasks[i];
-        console.log("----------");
-        console.log(`${parseInt(i) + 1}: ${task.name} - ${task.type} - ${task.steps}`);
-    }
+    // console.log(`Map: ${config.map}\nTotal Tasks: ${tasks.length}`);
+    // for(var i in tasks) {
+    //     let task = tasks[i];
+    //     console.log("----------");
+    //     console.log(`${parseInt(i) + 1}: ${task.name} - ${task.type} - ${task.steps}`);
+    // }
+    app.whenReady().then(() => createWindow(tasks));
 }
 
 main();

@@ -2,8 +2,9 @@
   "name": "imposter-generator",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,5 +15,8 @@
     "sequelize": "^6.3.5",
     "sqlite": "^4.0.14",
     "sqlite3": "^5.0.0"
+  },
+  "devDependencies": {
+    "electron": "^10.1.3"
   }
 }

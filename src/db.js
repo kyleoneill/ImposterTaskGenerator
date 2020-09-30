@@ -1,7 +1,8 @@
 const {Sequelize, Model, DataTypes} = require('sequelize');
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: 'database.sqlite'
+    storage: 'database.sqlite',
+    logging: false
 });
 
 const axios = require('axios');
@@ -14,7 +15,6 @@ async function initDatabase() {
     await sequelize.sync();
     let data = await Task.findAndCountAll();
     if(data.count !== 0) {
-        console.log("Database already built");
         return 0
     }
     console.log("Database is empty, building");
