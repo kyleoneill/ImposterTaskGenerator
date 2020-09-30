@@ -52,12 +52,31 @@
         </tbody>
       </table>
     </div>
+    <div>
+      <h4>Finished Tasks</h4>
+      <table id="finished-task-table">
+        <thead>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Steps</th>
+          <th>Order</th>
+          <th>Notes</th>
+        </thead>
+        <tbody>
+          
+        </tbody>
+      </table>
+    </div>
   </body>
   <script>
+    var state = {
+      currentFinishedTask: 1
+    }
     function buildTable(data) {
         var tbody = document.createElement('tbody');
         for(var i in data) {
             var row = tbody.insertRow(i);
+            row.id = `task-${i}`;
             var nameCell = row.insertCell(0);
             nameCell.innerHTML = data[i].name;
             var typeCell = row.insertCell(1);
@@ -65,10 +84,14 @@
             var stepCell = row.insertCell(2);
             stepCell.innerHTML = data[i].steps;
             var doneCell = row.insertCell(3);
-            var checkbox = document.createElement('input')
-            checkbox.type = "checkbox";
-            checkbox.id = `task-checkbox-${i}`;
-            doneCell.appendChild(checkbox);
+            doneCell.className = "task-done-cell";
+            var doneButton = document.createElement('button');
+            doneButton.className = "btn btn-success";
+            doneButton.textContent = "Done";
+            doneButton.addEventListener('click', (e) => {
+              handleFinishTask(e.path[2].id);
+            });
+            doneCell.appendChild(doneButton);
             var noteCell = row.insertCell(4);
             var input = document.createElement('input');
             input.type = "text";
@@ -77,6 +100,7 @@
         }
         let oldBody = document.querySelector('#task-table > tbody');
         oldBody.parentNode.replaceChild(tbody, oldBody);
+        clearFinishedTasks();
     }
     const querystring = require('querystring');
     let query = querystring.parse(global.location.search);
@@ -87,6 +111,32 @@
     ipcRenderer.on('action-update', (event, arg) => {
         buildTable(arg);
     });
+
+    function handleFinishTask(rowId) {
+      let row = document.getElementById(rowId);
+      let notes = row.lastElementChild.lastElementChild.value;
+      document.getElementById(rowId).remove();
+      row.removeChild(row.lastElementChild);
+      row.removeChild(row.lastElementChild);
+      let orderCell = row.insertCell(3);
+      let orderText = document.createElement('p');
+      orderText.textContent = state.currentFinishedTask;
+      orderCell.appendChild(orderText);
+      let notesCell = row.insertCell(4);
+      let notesText = document.createElement('p');
+      notesText.textContent = notes;
+      notesCell.appendChild(notesText);
+      document.querySelector("#finished-task-table > tbody").appendChild(row);
+      state.currentFinishedTask++;
+    }
+
+    function clearFinishedTasks() {
+      state.currentFinishedTask = 1;
+      var tbody = document.createElement('tbody');
+      let oldBody = document.querySelector('#finished-task-table > tbody');
+      oldBody.parentNode.replaceChild(tbody, oldBody);
+    }
+
     function handleClick(e) {
       let requestData = {
         map: document.getElementById("map-input").value,

@@ -7,20 +7,21 @@ header {
     margin-bottom: 2rem;
 }
 
-#task-table {
+table {
     border-collapse: collapse;
+    width: 100%;
 }
 
-#task-table td, #task-table th {
+table td, table th {
     border: 1px solid #ddd;
     padding: 8px;
 }
 
-#task-table tr:nth-child(even){background-color: #f2f2f2;}
+table tr:nth-child(even){background-color: #f2f2f2;}
 
-#task-table tr:hover {background-color: #ddd;}
+table tr:hover {background-color: #ddd;}
 
-#task-table th {
+table th {
   padding-top: 12px;
   padding-bottom: 12px;
   text-align: left;
