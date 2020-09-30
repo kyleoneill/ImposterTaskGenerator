@@ -8,22 +8,39 @@ const { app } = require("electron");
 //       to compensate in case that common task is not used by the group
 // Should common tasks be in this list at all?
 
-async function generateFakeTasks() {
+function verify_config(data) {
+    if(data.commonTasks >= 0 && data.commonTasks <= 2) {
+        if(data.longTasks >= 0 && data.longTasks <= 3) {
+            if(data.shortTasks >= 1 && data.shortTasks <= 5) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+async function generateFakeTasks(data) {
+    console.log(data);
+    if(!verify_config(data)) {
+        let map = data.map;
+        data = config;
+        data.map = map;
+    }
     let tasks = await Task.findAll({
         where: {
-            map: config.map
+            map: data.map
         }
     });
     let imposterTasks = [];
-    let commonTasksRemaining = config.commonTasks;
-    let longTasksRemaining = config.longTasks;
-    let shortTasksRemaining = config.shortTasks;
+    let commonTasksRemaining = data.commonTasks;
+    let longTasksRemaining = data.longTasks;
+    let shortTasksRemaining = data.shortTasks;
     while(commonTasksRemaining > 0 || longTasksRemaining > 0 || shortTasksRemaining > 0) {
         let index = Math.floor(Math.random() * tasks.length);
         let task = tasks[index].dataValues;
         tasks.splice(index, 1);
         let types = task.types.split(', ');
-        if(types.includes("Visual") && !config.visualTasksOn) {
+        if(types.includes("Visual") && !data.visualTasksOn) {
             continue;
         }
         else {
@@ -66,7 +83,7 @@ function createWindow(tasks) {
     });
     //win.setMenu(null);
     electron.ipcMain.on('request-update', (event, arg) => {
-        generateFakeTasks().then((tasks) => {
+        generateFakeTasks(arg).then((tasks) => {
             win.webContents.send('action-update', tasks);
         });
     });
@@ -75,7 +92,7 @@ function createWindow(tasks) {
 
 async function main() {
     await initDatabase();
-    let tasks = await generateFakeTasks();
+    let tasks = await generateFakeTasks(config);
     // console.log(`Map: ${config.map}\nTotal Tasks: ${tasks.length}`);
     // for(var i in tasks) {
     //     let task = tasks[i];

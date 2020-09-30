@@ -1,0 +1,29 @@
+body {
+    margin-left: 2rem;
+}
+
+header {
+    /* display: inline; */
+    margin-bottom: 2rem;
+}
+
+#task-table {
+    border-collapse: collapse;
+}
+
+#task-table td, #task-table th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#task-table tr:nth-child(even){background-color: #f2f2f2;}
+
+#task-table tr:hover {background-color: #ddd;}
+
+#task-table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4c88af;
+  color: white;
+}

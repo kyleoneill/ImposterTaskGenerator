@@ -2,23 +2,56 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>Imposter Task Generator</title>
     <!-- https://electronjs.org/docs/tutorial/security#csp-meta-tag -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>Imposter Tasks</h1>
-    <button onclick="handleClick(event)">New Tasks</button>
-    <table id="task-table">
+    <header>
+      <h4>Task Settings</h4>
+      <div>
+        <label for="map-input">Select a map:</label>
+        <select name="map-input" id="map-input">
+          <option value="Mira HQ">Mira HQ</option>
+          <option value="Polus">Polus</option>
+          <option value="The Skeld">The Skeld</option>
+        </select>
+      </div>
+      <div>
+        <label for="visual-input">Visual Tasks On: </label>
+        <input type="checkbox" id="visual-input" name="visual-input">
+      </div>
+      <div>
+        <label for="long-task-input">Number of long tasks: </label>
+        <input type="number" id="long-task-input" name="long-task-input" min="0" max="3">
+      </div>
+      <div>
+        <label for="short-task-input">Number of short tasks: </label>
+        <input type="number" id="short-task-input" name="short-task-input" min="1" max="5">
+      </div>
+      <div>
+        <label for="common-task-input">Number of common tasks: </label>
+        <input type="number" id="common-task-input" name="common-task-input"  min="0" max="2">
+      </div>
+      <button type="button" class="btn btn-primary" onclick="handleClick(event)">New Tasks</button>
+    </header>
+    <div>
+      <h4 id="task-table-name">Imposter Tasks</h4>
+      <table id="task-table">
         <thead>
             <th>Name</th>
             <th>Type</th>
             <th>Steps</th>
+            <th>Done</th>
+            <th>Notes</th>
         </thead>
         <tbody>
 
         </tbody>
-    </table>
+      </table>
+    </div>
   </body>
   <script>
     function buildTable(data) {
@@ -31,9 +64,17 @@
             typeCell.innerHTML = data[i].type;
             var stepCell = row.insertCell(2);
             stepCell.innerHTML = data[i].steps;
-            //document.writeln(`${nextInt}: ${data[i].name} - ${data[i].type} - ${data[i].steps}`);
+            var doneCell = row.insertCell(3);
+            var checkbox = document.createElement('input')
+            checkbox.type = "checkbox";
+            checkbox.id = `task-checkbox-${i}`;
+            doneCell.appendChild(checkbox);
+            var noteCell = row.insertCell(4);
+            var input = document.createElement('input');
+            input.type = "text";
+            input.id = `task-notes-${i}`;
+            noteCell.appendChild(input);
         }
-        //let table = document.getElementById("task-table");
         let oldBody = document.querySelector('#task-table > tbody');
         oldBody.parentNode.replaceChild(tbody, oldBody);
     }
@@ -47,7 +88,14 @@
         buildTable(arg);
     });
     function handleClick(e) {
-        ipcRenderer.send('request-update');
+      let requestData = {
+        map: document.getElementById("map-input").value,
+        visualTasksOn: document.getElementById("visual-input").checked,
+        longTasks: document.getElementById("long-task-input").value,
+        shortTasks: document.getElementById("short-task-input").value,
+        commonTasks: document.getElementById("common-task-input").value
+      };
+      ipcRenderer.send('request-update', requestData);
     }
   </script>
 </html>
