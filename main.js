@@ -79,13 +79,11 @@ function createWindow(tasks) {
 }
 
 function main() {
-    generateFakeTasks(config).then(tasks => {
-        app.whenReady().then(() => {
-            ipcMain.handle('requestUpdate', async (event, arg) => {
-                return await generateFakeTasks(arg);
-            });
-            createWindow(tasks);
+    app.whenReady().then(() => {
+        ipcMain.handle('requestUpdate', async (event, arg) => {
+            return await generateFakeTasks(arg);
         });
+        createWindow();
     });
 }
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Imposter Task Generator</title>
     <!-- https://electronjs.org/docs/tutorial/security#csp-meta-tag -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <!--<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" /> -->
     <link rel="stylesheet" href="bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
   </head>
@@ -47,6 +47,7 @@
             <th>Location</th>
             <th>Done</th>
             <th>Notes</th>
+            <th>Image</th>
         </thead>
         <tbody>
 
@@ -62,6 +63,7 @@
           <th>Location</th>
           <th>Order</th>
           <th>Notes</th>
+          <th>Image</th>
         </thead>
         <tbody>
           
@@ -74,17 +76,32 @@
       currentFinishedTask: 1
     }
     handleClick(null)
+
+    function removeAllChildNodes(parent) {
+      while(parent.firstChild) {
+        parent.removeChild(parent.firstChild);
+      }
+    }
+
     function buildTable(data) {
         let tbody = document.createElement('tbody');
         for(let i = 0; i < data.length; i++) {
             let row = tbody.insertRow(i);
             row.id = `task-${i}`;
+
+            // name cell
             let nameCell = row.insertCell(0);
             nameCell.innerHTML = data[i].name;
+
+            // type cell
             let typeCell = row.insertCell(1);
             typeCell.innerHTML = data[i].type;
-            let stepCell = row.insertCell(2);
-            stepCell.innerHTML = data[i].location;
+
+            // location cell
+            let locationCell = row.insertCell(2);
+            locationCell.innerHTML = data[i].location;
+
+            // done cell
             let doneCell = row.insertCell(3);
             doneCell.className = "task-done-cell";
             let doneButton = document.createElement('button');
@@ -94,32 +111,38 @@
               handleFinishTask(e.path[2].id);
             });
             doneCell.appendChild(doneButton);
-            let noteCell = row.insertCell(4);
+
+            // image cell
+            let imageCell = row.insertCell(4);
+            let imageElement = document.createElement('img');
+            // JS is interpreting our base64 as a uint8array for some reason after it gets it from the DB.
+            // We need to decode that from a uint8array back into a base64 string
+            let decoder = new TextDecoder();
+            imageElement.src = `data:image/png;base64,${decoder.decode(data[i].image)}`;
+            imageCell.appendChild(imageElement);
+
+            // notes cell
+            let noteCell = row.insertCell(5);
             let input = document.createElement('input');
             input.type = "text";
             input.id = `task-notes-${i}`;
             noteCell.appendChild(input);
+
         }
         let oldBody = document.querySelector('#task-table > tbody');
         oldBody.parentNode.replaceChild(tbody, oldBody);
         clearFinishedTasks();
     }
-    //const querystring = require('querystring');
-    //let query = querystring.parse(global.location.search);
-    //let data = JSON.parse(query['?data']);
-    //buildTable(data);
 
-    //const {ipcRenderer} = require('electron');
     window.addEventListener('action-update', (event, arg) => {
         buildTable(arg);
     });
 
     function handleFinishTask(rowId) {
+      // TODO: This terrible function does not yet do what I want. The notes and done colums/cells should be removed from the original row
       let row = document.getElementById(rowId);
       let notes = row.lastElementChild.lastElementChild.value;
       document.getElementById(rowId).remove();
-      row.removeChild(row.lastElementChild);
-      row.removeChild(row.lastElementChild);
       let orderCell = row.insertCell(3);
       let orderText = document.createElement('p');
       orderText.textContent = state.currentFinishedTask;
