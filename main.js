@@ -74,7 +74,7 @@ function createWindow(tasks) {
             nodeIntegration: true
         }
     });
-    //win.setMenu(null);
+    win.setMenu(null);
     win.loadFile('index.html')
 }
 

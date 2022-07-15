@@ -62,8 +62,8 @@
           <th>Type</th>
           <th>Location</th>
           <th>Order</th>
-          <th>Image</th>
           <th>Notes</th>
+          <th>Image</th>
         </thead>
         <tbody>
           
@@ -143,6 +143,8 @@
       let row = document.getElementById(rowId);
       let notes = row.lastElementChild.lastElementChild.value;
       document.getElementById(rowId).remove();
+      row.deleteCell(3);
+      row.deleteCell(4);
       let orderCell = row.insertCell(3);
       let orderText = document.createElement('p');
       orderText.textContent = state.currentFinishedTask;
