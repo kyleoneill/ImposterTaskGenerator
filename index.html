@@ -14,9 +14,10 @@
       <div>
         <label for="map-input">Select a map:</label>
         <select name="map-input" id="map-input">
-          <option value="Mira HQ">Mira HQ</option>
+          <option value="MIRA HQ">Mira HQ</option>
           <option value="Polus">Polus</option>
           <option value="The Skeld">The Skeld</option>
+          <option value="The Airship">The Airship</option>
         </select>
       </div>
       <div>
@@ -43,7 +44,7 @@
         <thead>
             <th>Name</th>
             <th>Type</th>
-            <th>Steps</th>
+            <th>Location</th>
             <th>Done</th>
             <th>Notes</th>
         </thead>
@@ -58,7 +59,7 @@
         <thead>
           <th>Name</th>
           <th>Type</th>
-          <th>Steps</th>
+          <th>Location</th>
           <th>Order</th>
           <th>Notes</th>
         </thead>
@@ -72,28 +73,29 @@
     var state = {
       currentFinishedTask: 1
     }
+    handleClick(null)
     function buildTable(data) {
-        var tbody = document.createElement('tbody');
-        for(var i in data) {
-            var row = tbody.insertRow(i);
+        let tbody = document.createElement('tbody');
+        for(let i = 0; i < data.length; i++) {
+            let row = tbody.insertRow(i);
             row.id = `task-${i}`;
-            var nameCell = row.insertCell(0);
+            let nameCell = row.insertCell(0);
             nameCell.innerHTML = data[i].name;
-            var typeCell = row.insertCell(1);
+            let typeCell = row.insertCell(1);
             typeCell.innerHTML = data[i].type;
-            var stepCell = row.insertCell(2);
-            stepCell.innerHTML = data[i].steps;
-            var doneCell = row.insertCell(3);
+            let stepCell = row.insertCell(2);
+            stepCell.innerHTML = data[i].location;
+            let doneCell = row.insertCell(3);
             doneCell.className = "task-done-cell";
-            var doneButton = document.createElement('button');
+            let doneButton = document.createElement('button');
             doneButton.className = "btn btn-success";
             doneButton.textContent = "Done";
             doneButton.addEventListener('click', (e) => {
               handleFinishTask(e.path[2].id);
             });
             doneCell.appendChild(doneButton);
-            var noteCell = row.insertCell(4);
-            var input = document.createElement('input');
+            let noteCell = row.insertCell(4);
+            let input = document.createElement('input');
             input.type = "text";
             input.id = `task-notes-${i}`;
             noteCell.appendChild(input);
@@ -102,13 +104,13 @@
         oldBody.parentNode.replaceChild(tbody, oldBody);
         clearFinishedTasks();
     }
-    const querystring = require('querystring');
-    let query = querystring.parse(global.location.search);
-    let data = JSON.parse(query['?data']);
-    buildTable(data);
+    //const querystring = require('querystring');
+    //let query = querystring.parse(global.location.search);
+    //let data = JSON.parse(query['?data']);
+    //buildTable(data);
 
-    const {ipcRenderer} = require('electron');
-    ipcRenderer.on('action-update', (event, arg) => {
+    //const {ipcRenderer} = require('electron');
+    window.addEventListener('action-update', (event, arg) => {
         buildTable(arg);
     });
 
@@ -137,7 +139,7 @@
       oldBody.parentNode.replaceChild(tbody, oldBody);
     }
 
-    function handleClick(e) {
+    async function handleClick(e) {
       let requestData = {
         map: document.getElementById("map-input").value,
         visualTasksOn: document.getElementById("visual-input").checked,
@@ -145,7 +147,8 @@
         shortTasks: document.getElementById("short-task-input").value,
         commonTasks: document.getElementById("common-task-input").value
       };
-      ipcRenderer.send('request-update', requestData);
+      const res = await window.electronAPI.requestUpdate(requestData);
+      buildTable(res)
     }
   </script>
 </html>

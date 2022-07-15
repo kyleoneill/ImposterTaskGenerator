@@ -1,72 +1,64 @@
-const {Task, initDatabase} = require("./src/db");
-this.database = {Task};
+const {Tasks} = require("./src/db");
 const config = require('./src/config.json');
-const electron = require('electron');
-const { app } = require("electron");
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
 
-//TODO - add extra tasks equivilant to the number of common tasks provided (ex, one common task in list - provide one extra task)
-//       to compensate in case that common task is not used by the group
-// Should common tasks be in this list at all?
-
-function verify_config(data) {
-    if(data.commonTasks >= 0 && data.commonTasks <= 2) {
-        if(data.longTasks >= 0 && data.longTasks <= 3) {
-            if(data.shortTasks >= 1 && data.shortTasks <= 5) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+const potential_task_types = ["Short","Common","Long"];
 
 async function generateFakeTasks(data) {
-    console.log(data);
-    if(!verify_config(data)) {
-        let map = data.map;
+    if(data.longTasks === '' || data.shortTasks === '' || data.commonTasks === '') {
         data = config;
-        data.map = map;
     }
-    let tasks = await Task.findAll({
-        where: {
-            map: data.map
-        }
-    });
+    let tasks = await Tasks.findAll();
     let imposterTasks = [];
     let commonTasksRemaining = data.commonTasks;
     let longTasksRemaining = data.longTasks;
     let shortTasksRemaining = data.shortTasks;
     while(commonTasksRemaining > 0 || longTasksRemaining > 0 || shortTasksRemaining > 0) {
+        if(tasks.length === 0) {
+            break;
+        }
         let index = Math.floor(Math.random() * tasks.length);
         let task = tasks[index].dataValues;
         tasks.splice(index, 1);
-        let types = task.types.split(', ');
-        if(types.includes("Visual") && !data.visualTasksOn) {
-            continue;
-        }
-        else {
-            let imposterTask = new Object();
-            for(var type in types) {
-                if(types[type] === "Short" && shortTasksRemaining > 0) {
-                    imposterTask.name = task.name;
-                    imposterTask.type = task.types;
-                    imposterTask.steps = task.steps;
-                    imposterTasks.push(imposterTask);
-                    shortTasksRemaining--;
+        let maps = task.map.split(';');
+        if(maps.includes(data.map)) {
+            let types = task.types.split(';');
+            let task_type = null;
+            if(types.length > 1) {
+                // There are multiple types depending on the map
+                // Get the index of the current map and walk backwards until we get a type and then use it
+                let i = types.indexOf(data.map);
+                if(i === -1) {
+                    continue;
                 }
-                else if(types[type] === "Long" && longTasksRemaining > 0) {
-                    imposterTask.name = task.name;
-                    imposterTask.type = task.types;
-                    imposterTask.steps = task.steps;
-                    imposterTasks.push(imposterTask);
-                    longTasksRemaining--;
+                for(let j = i; j > 0; j--) {
+                    if(potential_task_types.includes(types[j])) {
+                        task_type = types[j];
+                        break;
+                    }
                 }
-                else if(types[type] === "Common" && commonTasksRemaining > 0) {
-                    imposterTask.name = task.name;
-                    imposterTask.type = task.types;
-                    imposterTask.steps = task.steps;
-                    imposterTasks.push(imposterTask);
-                    commonTasksRemaining--;
-                }
+            }
+            else {
+                task_type = types[0];
+            }
+
+            let imposterTask = {};
+            imposterTask.name = task.name;
+            imposterTask.type = task_type;
+            imposterTask.location = task.location;
+            imposterTask.image = task.image;
+            imposterTask.map = task.map;
+
+            if (task_type === "Short" && shortTasksRemaining > 0) {
+                imposterTasks.push(imposterTask);
+                shortTasksRemaining--;
+            } else if (task_type === "Long" && longTasksRemaining > 0) {
+                imposterTasks.push(imposterTask);
+                longTasksRemaining--;
+            } else if (task_type === "Common" && commonTasksRemaining > 0) {
+                imposterTasks.push(imposterTask);
+                commonTasksRemaining--;
             }
         }
     }
@@ -74,32 +66,27 @@ async function generateFakeTasks(data) {
 }
 
 function createWindow(tasks) {
-    const win = new electron.BrowserWindow({
+    const win = new BrowserWindow({
         width: 1024,
         height: 768,
         webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true
         }
     });
-    win.setMenu(null);
-    electron.ipcMain.on('request-update', (event, arg) => {
-        generateFakeTasks(arg).then((tasks) => {
-            win.webContents.send('action-update', tasks);
-        });
-    });
-    win.loadFile('index.html', {query: {"data": JSON.stringify(tasks)}});
+    //win.setMenu(null);
+    win.loadFile('index.html')
 }
 
-async function main() {
-    await initDatabase();
-    let tasks = await generateFakeTasks(config);
-    // console.log(`Map: ${config.map}\nTotal Tasks: ${tasks.length}`);
-    // for(var i in tasks) {
-    //     let task = tasks[i];
-    //     console.log("----------");
-    //     console.log(`${parseInt(i) + 1}: ${task.name} - ${task.type} - ${task.steps}`);
-    // }
-    app.whenReady().then(() => createWindow(tasks));
+function main() {
+    generateFakeTasks(config).then(tasks => {
+        app.whenReady().then(() => {
+            ipcMain.handle('requestUpdate', async (event, arg) => {
+                return await generateFakeTasks(arg);
+            });
+            createWindow(tasks);
+        });
+    });
 }
 
 main();
